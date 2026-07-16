@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { Camera, Download, Share2, Type, MapPin, Calendar, Clock, Palette, ArrowLeft, RotateCw, ZoomIn, Shapes } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Camera, Download, Share2, Type, MapPin, Calendar, Clock, Palette, ArrowLeft, RotateCw, ZoomIn, Shapes, Trash2 } from "lucide-react";
 import { toPng } from "html-to-image";
 import Link from "next/link";
 import { CardData, TemplateStyle, AspectRatio, PhotoFit, PhotoShape } from "@/types/template";
@@ -10,6 +10,10 @@ export type TemplateEditorProps = {
   title: string;
   defaultData: CardData;
   availableStyles: TemplateStyle[];
+  hidePhotoUpload?: boolean;
+  hideColorPicker?: boolean;
+  hideSizeSelector?: boolean;
+  styleColorPalettes?: Record<string, { primary: string, font: string, name: string }[]>;
   renderTemplate: (
     data: CardData, 
     FullPictureDisplay: React.FC<{ src: string; className?: string }>, 
@@ -17,7 +21,7 @@ export type TemplateEditorProps = {
   ) => React.ReactNode;
 };
 
-export function TemplateEditor({ title, defaultData, availableStyles, renderTemplate }: TemplateEditorProps) {
+export function TemplateEditor({ title, defaultData, availableStyles, hidePhotoUpload, hideColorPicker, hideSizeSelector, styleColorPalettes, renderTemplate }: TemplateEditorProps) {
   const [data, setData] = useState<CardData>(defaultData);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingGif, setIsExportingGif] = useState(false);
@@ -35,6 +39,15 @@ export function TemplateEditor({ title, defaultData, availableStyles, renderTemp
       reader.readAsDataURL(file);
     }
   };
+
+  useEffect(() => {
+    if (styleColorPalettes && styleColorPalettes[data.style]) {
+      const palette = styleColorPalettes[data.style][0];
+      if (palette) {
+        setData(prev => ({ ...prev, primaryColor: palette.primary, fontColor: palette.font }));
+      }
+    }
+  }, [data.style, styleColorPalettes]);
 
   const handleRotateImage = () => {
     setData((prev) => ({ ...prev, photoRotation: (prev.photoRotation + 90) % 360 }));
@@ -200,143 +213,179 @@ export function TemplateEditor({ title, defaultData, availableStyles, renderTemp
             </div>
           </div>
 
-          {/* Colors & Card Size */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-3">
-              <label className="text-sm font-semibold flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full border border-zinc-300" style={{ backgroundColor: data.primaryColor }} />
-                Theme
-              </label>
-              <input 
-                type="color" 
-                value={data.primaryColor}
-                onChange={(e) => setData({ ...data, primaryColor: e.target.value })}
-                className="w-full h-10 rounded-lg cursor-pointer border border-zinc-200 dark:border-zinc-800 p-0 overflow-hidden"
-              />
-            </div>
+          {/* Color Palettes or Pickers & Size */}
+          <div className="flex flex-col gap-6">
+            {styleColorPalettes && styleColorPalettes[data.style] ? (
+              <div className="space-y-3">
+                <label className="text-sm font-semibold flex items-center gap-2">
+                  <Palette className="w-4 h-4 text-pink-500" />
+                  Color Theme
+                </label>
+                <div className="flex gap-4">
+                  {styleColorPalettes[data.style].map((palette, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setData({ ...data, primaryColor: palette.primary, fontColor: palette.font })}
+                      className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 ${data.primaryColor === palette.primary && data.fontColor === palette.font ? 'ring-2 ring-offset-2 ring-pink-500 scale-110 shadow-lg' : 'border-zinc-200 shadow-sm'}`}
+                      style={{ backgroundColor: palette.primary, borderColor: palette.font }}
+                      title={palette.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              !hideColorPicker && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border border-zinc-300" style={{ backgroundColor: data.primaryColor }} />
+                      Theme
+                    </label>
+                    <input 
+                      type="color" 
+                      value={data.primaryColor}
+                      onChange={(e) => setData({ ...data, primaryColor: e.target.value })}
+                      className="w-full h-10 rounded-lg cursor-pointer border border-zinc-200 dark:border-zinc-800 p-0 overflow-hidden"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full border border-zinc-300" style={{ backgroundColor: data.fontColor || '#ffffff' }} />
+                      Text
+                    </label>
+                    <input 
+                      type="color" 
+                      value={data.fontColor || '#ffffff'}
+                      onChange={(e) => setData({ ...data, fontColor: e.target.value })}
+                      className="w-full h-10 rounded-lg cursor-pointer border border-zinc-200 dark:border-zinc-800 p-0 overflow-hidden"
+                    />
+                  </div>
+                </div>
+              )
+            )}
 
-            <div className="space-y-3">
-              <label className="text-sm font-semibold flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full border border-zinc-300" style={{ backgroundColor: data.fontColor || '#ffffff' }} />
-                Text
-              </label>
-              <input 
-                type="color" 
-                value={data.fontColor || '#ffffff'}
-                onChange={(e) => setData({ ...data, fontColor: e.target.value })}
-                className="w-full h-10 rounded-lg cursor-pointer border border-zinc-200 dark:border-zinc-800 p-0 overflow-hidden"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <label className="text-sm font-semibold flex items-center gap-2">
-                <Shapes className="w-4 h-4 text-emerald-500" />
-                Size
-              </label>
-              <select
-                value={data.aspectRatio}
-                onChange={(e) => setData({ ...data, aspectRatio: e.target.value as AspectRatio })}
-                className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium outline-none focus:ring-2 focus:ring-pink-500 transition-shadow appearance-none"
-              >
-                <option value="aspect-[3/4]">Portrait (3:4)</option>
-                <option value="aspect-[9/16]">Story (9:16)</option>
-                <option value="aspect-[4/3]">Landscape (4:3)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="space-y-3">
-            <label className="text-sm font-semibold flex items-center gap-2">
-              <Camera className="w-4 h-4 text-indigo-500" />
-              Photo
-            </label>
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef} 
-              onChange={handleImageUpload} 
-            />
-            <div className="flex gap-2">
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all"
-              >
-                <Camera className="w-5 h-5" />
-                {data.photoUrl ? "Change Photo" : "Upload Photo"}
-              </button>
-              {data.photoUrl && (
-                <button
-                  onClick={handleRotateImage}
-                  className="flex items-center justify-center p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
-                  title="Rotate Image"
+            {!hideSizeSelector && (
+              <div className="space-y-3 w-1/3 min-w-[150px]">
+                <label className="text-sm font-semibold flex items-center gap-2">
+                  <Shapes className="w-4 h-4 text-emerald-500" />
+                  Size
+                </label>
+                <select
+                  value={data.aspectRatio}
+                  onChange={(e) => setData({ ...data, aspectRatio: e.target.value as AspectRatio })}
+                  className="w-full h-10 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm font-medium outline-none focus:ring-2 focus:ring-pink-500 transition-shadow appearance-none"
                 >
-                  <RotateCw className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-
-            {/* Photo Adjustments */}
-            {data.photoUrl && (
-              <div className="bg-zinc-100 dark:bg-zinc-900 p-3 rounded-xl space-y-4 mt-2">
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
-                    <Shapes className="w-3 h-3" /> Photo Shape
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(["vertical", "circle", "horizontal"] as PhotoShape[]).map((shape) => (
-                      <button
-                        key={shape}
-                        onClick={() => setData({ ...data, photoShape: shape })}
-                        className={`text-xs px-2 py-1.5 rounded-md capitalize transition-colors border ${
-                          data.photoShape === shape 
-                            ? "bg-white dark:bg-zinc-950 border-pink-500 shadow-sm font-bold text-pink-600 dark:text-pink-400" 
-                            : "bg-transparent border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
-                        }`}
-                      >
-                        {shape}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
-                  <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Image Fit</label>
-                  <div className="flex bg-zinc-200 dark:bg-zinc-800 rounded-lg p-0.5">
-                    <button
-                      onClick={() => setData({ ...data, photoFit: "contain" })}
-                      className={`text-xs px-2 py-1 rounded-md transition-colors ${data.photoFit === "contain" ? "bg-white dark:bg-zinc-950 shadow-sm" : ""}`}
-                    >
-                      Fit Entirely
-                    </button>
-                    <button
-                      onClick={() => setData({ ...data, photoFit: "cover" })}
-                      className={`text-xs px-2 py-1 rounded-md transition-colors ${data.photoFit === "cover" ? "bg-white dark:bg-zinc-950 shadow-sm" : ""}`}
-                    >
-                      Fill Box
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-                    <label className="flex items-center gap-1"><ZoomIn className="w-3 h-3" /> Zoom</label>
-                    <span>{Math.round(data.photoZoom * 100)}%</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0.5" 
-                    max="3" 
-                    step="0.1" 
-                    value={data.photoZoom} 
-                    onChange={(e) => setData({...data, photoZoom: parseFloat(e.target.value)})}
-                    className="w-full accent-pink-500"
-                  />
-                </div>
+                  <option value="aspect-[3/4]">Portrait (3:4)</option>
+                  <option value="aspect-[9/16]">Story (9:16)</option>
+                  <option value="aspect-[4/3]">Landscape (4:3)</option>
+                </select>
               </div>
             )}
           </div>
+
+          {/* Image Upload */}
+          {!hidePhotoUpload && (
+            <div className="space-y-3">
+              <label className="text-sm font-semibold flex items-center gap-2">
+                <Camera className="w-4 h-4 text-indigo-500" />
+                Photo
+              </label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleImageUpload} 
+              />
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl text-zinc-600 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-all"
+                >
+                  <Camera className="w-5 h-5" />
+                  {data.photoUrl ? "Change Photo" : "Upload Photo"}
+                </button>
+                {data.photoUrl && (
+                  <>
+                    <button
+                      onClick={handleRotateImage}
+                      className="flex items-center justify-center p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+                      title="Rotate Image"
+                    >
+                      <RotateCw className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setData(prev => ({ ...prev, photoUrl: null }))}
+                      className="flex items-center justify-center p-3 border border-zinc-300 dark:border-zinc-700 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all"
+                      title="Clear Photo"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Photo Adjustments */}
+              {data.photoUrl && (
+                <div className="bg-zinc-100 dark:bg-zinc-900 p-3 rounded-xl space-y-4 mt-2">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+                      <Shapes className="w-3 h-3" /> Photo Shape
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["vertical", "circle", "horizontal"] as PhotoShape[]).map((shape) => (
+                        <button
+                          key={shape}
+                          onClick={() => setData({ ...data, photoShape: shape })}
+                          className={`text-xs px-2 py-1.5 rounded-md capitalize transition-colors border ${
+                            data.photoShape === shape 
+                              ? "bg-white dark:bg-zinc-950 border-pink-500 shadow-sm font-bold text-pink-600 dark:text-pink-400" 
+                              : "bg-transparent border-zinc-300 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+                          }`}
+                        >
+                          {shape}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Image Fit</label>
+                    <div className="flex bg-zinc-200 dark:bg-zinc-800 rounded-lg p-0.5">
+                      <button
+                        onClick={() => setData({ ...data, photoFit: "contain" })}
+                        className={`text-xs px-2 py-1 rounded-md transition-colors ${data.photoFit === "contain" ? "bg-white dark:bg-zinc-950 shadow-sm" : ""}`}
+                      >
+                        Fit Entirely
+                      </button>
+                      <button
+                        onClick={() => setData({ ...data, photoFit: "cover" })}
+                        className={`text-xs px-2 py-1 rounded-md transition-colors ${data.photoFit === "cover" ? "bg-white dark:bg-zinc-950 shadow-sm" : ""}`}
+                      >
+                        Fill Box
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                      <label className="flex items-center gap-1"><ZoomIn className="w-3 h-3" /> Zoom</label>
+                      <span>{Math.round(data.photoZoom * 100)}%</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0.5" 
+                      max="3" 
+                      step="0.1" 
+                      value={data.photoZoom} 
+                      onChange={(e) => setData({...data, photoZoom: parseFloat(e.target.value)})}
+                      className="w-full accent-pink-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Text Details */}
           <div className="space-y-4">
@@ -419,14 +468,7 @@ export function TemplateEditor({ title, defaultData, availableStyles, renderTemp
         
         {/* Actions Menu */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 lg:top-6 lg:translate-y-0 lg:right-6 flex flex-col lg:flex-row items-end lg:items-center gap-4 lg:gap-3 z-20">
-          <button 
-            onClick={handleDownloadGif}
-            disabled={isExporting || isExportingGif}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white p-3 lg:px-4 lg:py-2 rounded-full shadow-lg border border-orange-400/50 font-medium hover:scale-105 transition-transform disabled:opacity-50"
-            title="Save GIF"
-          >
-            <Download className="w-5 h-5 lg:w-4 lg:h-4" /> <span className="hidden lg:inline">{isExportingGif ? "Generating GIF..." : "Save GIF"}</span>
-          </button>
+
           <button 
             onClick={handleDownload}
             disabled={isExporting || isExportingGif}

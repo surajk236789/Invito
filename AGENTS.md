@@ -23,3 +23,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Color Architecture:** Templates receive `data.primaryColor` and `data.fontColor`. For aesthetic consistency (especially in Anniversary and Wedding templates), use `primaryColor` strictly for the background base and `fontColor` for text and border accents, applied via inline styles on the root container of the template.
 - **Custom Graphics:** Use AI generated graphics placed in `/public/images` (like Ganesha or Knots) as subtle watermarks using standard CSS backgrounds (e.g. `bg-[url('/images/ganesha.png')]`) in the template root.
 <!-- END:ui-architecture -->
+
+<!-- BEGIN:design-consistency -->
+# Design & Consistency Rules (Learnings)
+
+- **Color Palette Reactivity:** All templates MUST dynamically respond to color palette changes. Ensure the root element of every template sets its background using `style={{ backgroundColor: data.primaryColor }}` and text/accents using `data.fontColor`. Avoid hardcoding background utility classes (e.g., `bg-zinc-950` or `bg-[#111]`) on the root container, as this breaks the theme selector.
+- **Dynamic Photo Visibility:** If the user does not upload a photo (`!data.photoUrl`), do NOT render a `<Camera />` placeholder icon. The entire photo container should elegantly collapse or vanish so the template seamlessly resizes into a text-only layout.
+- **Premium Photo Sizing:** Use the standardized `getPhotoShapeClasses(data.photoShape)` function for photo wrappers. This ensures consistent, large, and stylish dimensions (e.g. `max-h-[280px]` for vertical, up to `380px` on large screens) combined with elegant drop shadows (`shadow-xl`) to make images pop.
+- **True Asset Transparency:** AI-generated graphics (like Ganesha, Peacock, Mandala) often come with baked-in solid backgrounds (white, gray, or black). Do NOT rely purely on CSS blending modes (`mix-blend-multiply` or `mix-blend-screen + invert`) as these can fail or tint unpredictably against different colored templates. Use Python to algorithmically remove the background to achieve true alpha transparency before importing them into Next.js.
+<!-- END:design-consistency -->

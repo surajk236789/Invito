@@ -10,6 +10,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-script: "Great Vibes", cursive;
+  --font-serif-elegant: "Playfair Display", serif;
+  --font-sans-clean: "Montserrat", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {

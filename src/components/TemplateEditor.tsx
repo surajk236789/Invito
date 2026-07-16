@@ -418,27 +418,30 @@ export function TemplateEditor({ title, defaultData, availableStyles, renderTemp
       <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-12 relative overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')] dark:bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
         
         {/* Actions Menu */}
-        <div className="absolute top-6 right-6 flex items-center gap-3 z-20">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 lg:top-6 lg:translate-y-0 lg:right-6 flex flex-col lg:flex-row items-end lg:items-center gap-4 lg:gap-3 z-20">
           <button 
             onClick={handleDownloadGif}
             disabled={isExporting || isExportingGif}
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-2 rounded-full shadow-lg border border-orange-400/50 font-medium hover:scale-105 transition-transform disabled:opacity-50"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white p-3 lg:px-4 lg:py-2 rounded-full shadow-lg border border-orange-400/50 font-medium hover:scale-105 transition-transform disabled:opacity-50"
+            title="Save GIF"
           >
-            <Download className="w-4 h-4" /> {isExportingGif ? "Generating GIF..." : "Save GIF"}
+            <Download className="w-5 h-5 lg:w-4 lg:h-4" /> <span className="hidden lg:inline">{isExportingGif ? "Generating GIF..." : "Save GIF"}</span>
           </button>
           <button 
             onClick={handleDownload}
             disabled={isExporting || isExportingGif}
-            className="flex items-center gap-2 bg-white dark:bg-zinc-900 px-4 py-2 rounded-full shadow-lg border border-zinc-200 dark:border-zinc-800 font-medium hover:scale-105 transition-transform disabled:opacity-50"
+            className="flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 p-3 lg:px-4 lg:py-2 rounded-full shadow-lg border border-zinc-200 dark:border-zinc-800 font-medium hover:scale-105 transition-transform disabled:opacity-50"
+            title="Save Image"
           >
-            <Download className="w-4 h-4" /> {isExporting ? "Saving..." : "Save Image"}
+            <Download className="w-5 h-5 lg:w-4 lg:h-4 text-zinc-900 dark:text-zinc-100" /> <span className="hidden lg:inline text-zinc-900 dark:text-zinc-100">{isExporting ? "Saving..." : "Save Image"}</span>
           </button>
           <button 
             onClick={handleShare}
             disabled={isExporting || isExportingGif}
-            className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 text-white px-4 py-2 rounded-full shadow-lg shadow-pink-500/25 font-medium hover:scale-105 transition-transform disabled:opacity-50"
+            className="flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-violet-500 text-white p-3 lg:px-4 lg:py-2 rounded-full shadow-lg shadow-pink-500/25 font-medium hover:scale-105 transition-transform disabled:opacity-50"
+            title="Share"
           >
-            <Share2 className="w-4 h-4" /> Share
+            <Share2 className="w-5 h-5 lg:w-4 lg:h-4" /> <span className="hidden lg:inline">Share</span>
           </button>
         </div>
 
